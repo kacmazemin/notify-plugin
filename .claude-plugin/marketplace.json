@@ -1,0 +1,24 @@
+{
+  "name": "claude-notify-marketplace",
+  "owner": {
+    "name": "Mehmet Kacmaz",
+    "email": "kacmazemin72@gmail.com",
+    "url": "https://github.com/kacmazemin"
+  },
+  "plugins": [
+    {
+      "name": "claude-notify",
+      "source": ".",
+      "description": "Desktop notification + sound when Claude finishes a job or is waiting for input",
+      "version": "1.1.0",
+      "author": {
+        "name": "Mehmet Kacmaz",
+        "email": "kacmazemin72@gmail.com"
+      },
+      "homepage": "https://github.com/kacmazemin/notify-plugin",
+      "repository": "https://github.com/kacmazemin/notify-plugin",
+      "license": "MIT",
+      "keywords": ["notification", "toast", "desktop", "hook", "windows", "macos", "linux"]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh\" \"Job done - Claude has finished working.\"",
+            "async": true,
+            "timeout": 20,
+            "statusMessage": "Sending done notification"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh\" \"Claude is waiting for your input.\"",
+            "async": true,
+            "timeout": 20,
+            "statusMessage": "Sending input-needed notification"
+          }
+        ]
+      }
+    ]
+  }
+}
