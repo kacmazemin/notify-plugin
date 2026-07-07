@@ -1,9 +1,9 @@
 # Animated notification overlay: frameless card bottom-right, fades out after
-# ~4s. Shows a logo image with a gentle pulse, or a spinning 3D cube if no
-# logo is found. Logo resolution order:
-#   1. %LOCALAPPDATA%\claude-done-notify\logo.png   (per-user override)
-#   2. <plugin root>\assets\logo.png                (bundled default)
-#   3. none -> spinning cube
+# ~4s. Visual resolution order:
+#   1. %LOCALAPPDATA%\claude-done-notify\logo.png   (per-user PNG override, pulses)
+#   2. <plugin root>\assets\logo.png                (bundled PNG, pulses)
+#   3. <plugin root>\assets\robot_knock_retro.gif   (bundled animated GIF, default)
+#   4. none -> spinning 3D cube
 # Click focuses the terminal (like the toast it replaces) and dismisses.
 # Never steals focus on its own.
 param([string]$Message = 'Job done - Claude has finished working.')
@@ -17,6 +17,9 @@ if (-not (Test-Path $logoPath)) {
 }
 $useLogo = Test-Path $logoPath
 
+$gifPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\robot_knock_retro.gif'
+$useGif = (-not $useLogo) -and (Test-Path $gifPath)
+
 if ($useLogo) {
     $visualXaml = @"
       <Grid Width="84" Height="84">
@@ -29,6 +32,13 @@ if ($useLogo) {
             </TransformGroup>
           </Image.RenderTransform>
         </Image>
+      </Grid>
+"@
+} elseif ($useGif) {
+    $visualXaml = @"
+      <Grid Width="84" Height="84">
+        <Image x:Name="GifFrame" Width="76" Height="76" Stretch="Uniform"
+               VerticalAlignment="Center" HorizontalAlignment="Center"/>
       </Grid>
 "@
 } else {
@@ -165,6 +175,36 @@ if ($useLogo) {
         $fadeIn = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 1, [TimeSpan]::FromMilliseconds(250))
         $window.BeginAnimation([System.Windows.Window]::OpacityProperty, $fadeIn)
     })
+} elseif ($useGif) {
+    # Decode every GIF frame up front, then flip the Image source on a timer that
+    # honours each frame's own delay metadata (falling back to ~100ms).
+    $decoder = New-Object System.Windows.Media.Imaging.GifBitmapDecoder(
+        [Uri]$gifPath,
+        [System.Windows.Media.Imaging.BitmapCreateOptions]::None,
+        [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad)
+    $frames = @($decoder.Frames)
+    $delays = foreach ($f in $frames) {
+        $cs = $f.Metadata.GetQuery('/grctlext/Delay')
+        if ($cs -and $cs -gt 0) { [int]$cs * 10 } else { 100 }
+    }
+    $delays = @($delays)
+    $img = $window.FindName('GifFrame')
+    $script:gifIndex = 0
+    $img.Source = $frames[0]
+
+    $gifTimer = New-Object System.Windows.Threading.DispatcherTimer
+    $gifTimer.Interval = [TimeSpan]::FromMilliseconds($delays[0])
+    $gifTimer.Add_Tick({
+        $script:gifIndex = ($script:gifIndex + 1) % $frames.Count
+        $img.Source = $frames[$script:gifIndex]
+        $gifTimer.Interval = [TimeSpan]::FromMilliseconds($delays[$script:gifIndex])
+    }.GetNewClosure())
+
+    $window.Add_Loaded({
+        $gifTimer.Start()
+        $fadeIn = New-Object System.Windows.Media.Animation.DoubleAnimation(0, 1, [TimeSpan]::FromMilliseconds(250))
+        $window.BeginAnimation([System.Windows.Window]::OpacityProperty, $fadeIn)
+    }.GetNewClosure())
 } else {
     $spinY = $window.FindName('SpinY')
     $spinX = $window.FindName('SpinX')

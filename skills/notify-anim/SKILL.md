@@ -25,10 +25,11 @@ Interpret the user's argument and act:
   powershell.exe -NoProfile -Command "if (Test-Path \"$env:LOCALAPPDATA\claude-done-notify\anim-off\") { 'animation: OFF' } else { 'animation: ON (default)' }"
   ```
 
-The overlay's visual: the card shows a logo image with a gentle pulse,
-resolved as `%LOCALAPPDATA%\claude-done-notify\logo.png` (per-user override)
-first, else the plugin-bundled `assets/logo.png`, else a
-spinning 3D cube. To use a custom logo, drop a PNG at the override path.
+The overlay's visual is resolved as `%LOCALAPPDATA%\claude-done-notify\logo.png`
+(per-user PNG override, gentle pulse) first, else the plugin-bundled
+`assets/logo.png`, else the bundled animated GIF `assets/robot_knock_retro.gif`
+(the default), else a spinning 3D cube. To use a custom logo, drop a PNG at the
+override path.
 
 Notes:
 - This is a Windows-only feature; on macOS/Linux tell the user the overlay is

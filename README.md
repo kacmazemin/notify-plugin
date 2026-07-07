@@ -49,7 +49,7 @@ git clone https://github.com/kacmazemin/notify-plugin
 
 ## Animated Overlay (Windows)
 
-On by default. Shows an animated card with the bundled logo in the bottom-right corner instead of the toast. Clicking the card focuses the terminal, same as a toast click.
+On by default. Shows an animated card with the bundled robot animation in the bottom-right corner instead of the toast. Clicking the card focuses the terminal, same as a toast click.
 
 Disable:
 
@@ -61,11 +61,12 @@ Creates the flag file `%LOCALAPPDATA%\claude-done-notify\anim-off` and falls bac
 
 ### Custom Logo
 
-The logo is resolved in this order:
+The overlay visual is resolved in this order:
 
-1. `%LOCALAPPDATA%\claude-done-notify\logo.png` — per-user override; drop any PNG here to use your own (transparent background looks best)
-2. `assets/logo.png` bundled with the plugin
-3. Neither found — falls back to a spinning 3D cube
+1. `%LOCALAPPDATA%\claude-done-notify\logo.png` — per-user override; drop any PNG here to use your own (transparent background looks best), shown with a gentle pulse
+2. `assets/logo.png` bundled with the plugin (not shipped by default)
+3. `assets/robot_knock_retro.gif` — bundled animated GIF, the default
+4. None found — falls back to a spinning 3D cube
 
 ## How It Works
 
