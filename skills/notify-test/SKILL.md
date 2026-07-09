@@ -1,29 +1,22 @@
 ---
 name: notify-test
-description: Fire a test claude-notify notification (sound + toast, or the animated overlay instead if enabled). Optional argument = delay in seconds before firing, so the user can minimize the terminal first. Use when the user invokes /notify-test or asks to test their notifications.
+description: Fire a test claude-notify notification (sound + toast/overlay). Optional argument = delay in seconds before firing, so the user can minimize the terminal first. Use when the user invokes /notify-test or asks to test their notifications.
 ---
 
-# Test the claude-notify notification
+# Test claude-notify
 
-Fire the plugin's notification pipeline once so the user can see/hear it.
+Run the notification once. Keep the response to one line — this is a cheap
+action, don't over-explain.
 
-The notification script lives in this plugin at
-`${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh`. If that placeholder is not resolved,
-locate `claude-notify-plugin/hooks/notify.sh` (or `claude-notify/hooks/notify.sh`)
-under `~/.claude/plugins/`.
+```
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh" "Test notification - it works!"
+```
 
-Steps:
+- If an argument N is given, sleep N seconds first so the user can minimize:
+  `powershell.exe -NoProfile -Command "Start-Sleep N"` then run the line above.
+- If `${CLAUDE_PLUGIN_ROOT}` is unresolved, find `notify.sh` under
+  `~/.claude/plugins/` (`claude-notify/hooks/`).
 
-1. If the user gave a delay argument N (seconds), tell them to minimize the
-   terminal now, then wait N seconds first (e.g.
-   `powershell.exe -NoProfile -Command "Start-Sleep -Seconds N"` on Windows,
-   or include the delay before the script call).
-2. Run the notification:
-   ```
-   bash "${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh" "Test notification - it works!"
-   ```
-3. Tell the user what to expect: a sound, plus either a Windows toast
-   (default) or — if the animated overlay is enabled (see /notify-anim) —
-   an animated card with the logo bottom-right for ~4 seconds instead of
-   the toast. Clicking either one focuses this terminal. On macOS/Linux,
-   a native notification appears.
+Tip to mention once: running it in-chat costs a model turn. To test with zero
+tokens, run the `bash …/notify.sh` line directly in a terminal, or in this
+session prefix it with `!`.
