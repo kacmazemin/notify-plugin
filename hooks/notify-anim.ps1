@@ -1,9 +1,10 @@
 # Animated notification overlay: frameless card bottom-right, fades out after
 # ~4s. Visual resolution order:
-#   1. %LOCALAPPDATA%\claude-done-notify\logo.png   (per-user PNG override, pulses)
-#   2. <plugin root>\assets\logo.png                (bundled PNG, pulses)
-#   3. <plugin root>\assets\robot_knock_retro.gif   (bundled animated GIF, default)
-#   4. none -> spinning 3D cube
+#   1. %LOCALAPPDATA%\claude-done-notify\logo.gif   (per-user animated GIF override)
+#   2. %LOCALAPPDATA%\claude-done-notify\logo.png   (per-user PNG override, pulses)
+#   3. <plugin root>\assets\logo.png                (bundled PNG, pulses)
+#   4. <plugin root>\assets\robot_knock_retro.gif   (bundled animated GIF, default)
+#   5. none -> spinning 3D cube
 # Click focuses the terminal (like the toast it replaces) and dismisses.
 # Never steals focus on its own.
 param([string]$Message = 'Job done - Claude has finished working.')
@@ -23,13 +24,22 @@ if (Test-Path $durFile) {
         -and $parsed -ge 0.5 -and $parsed -le 60) { $visibleSec = $parsed }
 }
 
+# Per-user animated GIF override wins outright: drop a logo.gif here and it plays.
+$userGif = Join-Path $env:LOCALAPPDATA 'claude-done-notify\logo.gif'
+$hasUserGif = Test-Path $userGif
+
 $logoPath = Join-Path $env:LOCALAPPDATA 'claude-done-notify\logo.png'
 if (-not (Test-Path $logoPath)) {
     $logoPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\logo.png'
 }
-$useLogo = Test-Path $logoPath
+# A per-user GIF takes priority over any PNG (bundled or per-user).
+$useLogo = (-not $hasUserGif) -and (Test-Path $logoPath)
 
-$gifPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\robot_knock_retro.gif'
+if ($hasUserGif) {
+    $gifPath = $userGif
+} else {
+    $gifPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\robot_knock_retro.gif'
+}
 $useGif = (-not $useLogo) -and (Test-Path $gifPath)
 
 if ($useLogo) {
