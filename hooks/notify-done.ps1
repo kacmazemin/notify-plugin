@@ -56,11 +56,21 @@ if ((Get-ItemProperty -Path $cmdKey -ErrorAction SilentlyContinue).'(default)' -
 Add-Type @"
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 public class ConWin {
     [DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
     [DllImport("kernel32.dll")] public static extern bool AttachConsole(uint pid);
     [DllImport("kernel32.dll")] public static extern bool FreeConsole();
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+    [DllImport("user32.dll")] static extern int GetClassName(IntPtr h, StringBuilder s, int n);
+    // A console hosted by Windows Terminal (or any ConPTY, incl. VS Code) reports
+    // an invisible 0x0 'PseudoConsoleWindow' - a real HWND that is NOT the window
+    // the user sees. Reject it so detection falls through to the GUI-host passes.
+    public static bool IsRealConsole(IntPtr h) {
+        var sb = new StringBuilder(64);
+        GetClassName(h, sb, 64);
+        return sb.ToString() != "PseudoConsoleWindow";
+    }
 }
 "@
 
@@ -99,7 +109,7 @@ if ($hwnd -eq 0) {
         if ([ConWin]::AttachConsole([uint32]$id)) {
             $h = [ConWin]::GetConsoleWindow()
             [ConWin]::FreeConsole() | Out-Null
-            if ($h -ne [IntPtr]::Zero -and [ConWin]::IsWindowVisible($h)) { $hwnd = [int64]$h; break }
+            if ($h -ne [IntPtr]::Zero -and [ConWin]::IsWindowVisible($h) -and [ConWin]::IsRealConsole($h)) { $hwnd = [int64]$h; break }
         }
     }
 }

@@ -11,6 +11,18 @@ $ErrorActionPreference = 'SilentlyContinue'
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
+# How long the card stays fully visible before fading out (seconds). Override by
+# writing a number to %LOCALAPPDATA%\claude-done-notify\duration (set via
+# /notify-visibility duration <sec>). Default 5, clamped to 0.5..60.
+$visibleSec = 5
+$durFile = Join-Path $env:LOCALAPPDATA 'claude-done-notify\duration'
+if (Test-Path $durFile) {
+    $raw = (Get-Content $durFile -TotalCount 1 -ErrorAction SilentlyContinue)
+    $parsed = 0.0
+    if ([double]::TryParse($raw, [System.Globalization.NumberStyles]::Float, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$parsed) `
+        -and $parsed -ge 0.5 -and $parsed -le 60) { $visibleSec = $parsed }
+}
+
 $logoPath = Join-Path $env:LOCALAPPDATA 'claude-done-notify\logo.png'
 if (-not (Test-Path $logoPath)) {
     $logoPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'assets\logo.png'
@@ -223,9 +235,9 @@ if ($useLogo) {
     })
 }
 
-# Fade out and close after ~4 seconds
+# Fade out and close after the configured visible time (+ ~0.45s fade)
 $timer = New-Object System.Windows.Threading.DispatcherTimer
-$timer.Interval = [TimeSpan]::FromSeconds(3.5)
+$timer.Interval = [TimeSpan]::FromSeconds($visibleSec)
 $timer.Add_Tick({
     $timer.Stop()
     $fade = New-Object System.Windows.Media.Animation.DoubleAnimation(1, 0, [TimeSpan]::FromMilliseconds(450))

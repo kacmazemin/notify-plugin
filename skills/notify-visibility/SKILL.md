@@ -44,9 +44,19 @@ platforms):
   ```
   bash -c 'd="${LOCALAPPDATA:-$HOME/.config}/claude-done-notify"; mkdir -p "$d" && printf silent > "$d/mode"'
   ```
-- **status** or no argument — report the effective mode:
+- **duration N** (or "show longer", "keep it up N seconds") — set how long the
+  overlay card stays before fading (Windows overlay only; 0.5–60s, default 5).
+  Write the number to the `duration` file:
   ```
-  bash -c 'd="${LOCALAPPDATA:-$HOME/.config}/claude-done-notify"; if [ -f "$d/mode" ]; then echo "mode: $(cat "$d/mode")"; elif [ -f "$d/mute" ]; then echo "mode: silent (legacy mute flag)"; elif [ -f "$d/anim-off" ]; then echo "mode: toast (legacy anim-off flag)"; else echo "mode: overlay (default)"; fi'
+  bash -c 'd="${LOCALAPPDATA:-$HOME/.config}/claude-done-notify"; mkdir -p "$d" && printf %s "N" > "$d/duration"'
+  ```
+  To reset to default, delete it:
+  ```
+  bash -c 'rm -f "${LOCALAPPDATA:-$HOME/.config}/claude-done-notify/duration"'
+  ```
+- **status** or no argument — report the effective mode and overlay duration:
+  ```
+  bash -c 'd="${LOCALAPPDATA:-$HOME/.config}/claude-done-notify"; if [ -f "$d/mode" ]; then echo "mode: $(cat "$d/mode")"; elif [ -f "$d/mute" ]; then echo "mode: silent (legacy mute flag)"; elif [ -f "$d/anim-off" ]; then echo "mode: toast (legacy anim-off flag)"; else echo "mode: overlay (default)"; fi; if [ -f "$d/duration" ]; then echo "overlay duration: $(cat "$d/duration")s"; else echo "overlay duration: 5s (default)"; fi'
   ```
 
 ## Notes
