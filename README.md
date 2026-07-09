@@ -2,7 +2,7 @@
 
 > Desktop notification + sound whenever Claude Code finishes a job or is waiting for your input — so you can tab away while it works.
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](.claude-plugin/plugin.json)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
