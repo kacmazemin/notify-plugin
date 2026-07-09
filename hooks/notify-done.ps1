@@ -1,19 +1,26 @@
 # Claude Code hook: Windows toast + sound. Clicking the toast focuses the terminal.
 param(
-    [string]$Message = 'Job done - Claude has finished working.'
+    [string]$Message = 'Job done - Claude has finished working.',
+    [string]$Mode = 'overlay'
 )
 $ErrorActionPreference = 'SilentlyContinue'
 
-# Play a notification sound
+# Notification mode (set by /notify-visibility): silent | sound | toast | overlay.
+# Default overlay. 'silent' is normally filtered upstream by notify.sh; guard here too.
+$Mode = ($Mode).Trim().ToLower()
+if ($Mode -notin @('silent', 'sound', 'toast', 'overlay')) { $Mode = 'overlay' }
+if ($Mode -eq 'silent') { return }
+
+# Play a notification sound (every non-silent mode).
 [System.Media.SystemSounds]::Exclamation.Play()
 
-# Animated overlay (bottom-right, ~4s, click to focus terminal). Replaces the
-# Windows toast. ON by default - opt out by creating the flag file:
-#   New-Item "$env:LOCALAPPDATA\claude-done-notify\anim-off" -ItemType File
-# or setting the env var CLAUDE_NOTIFY_ANIM=0. Runs detached.
+# 'sound' = audio only, no visual - nothing to register or draw.
+if ($Mode -eq 'sound') { return }
+
+# Animated overlay (bottom-right, ~4s, click to focus terminal) for 'overlay'
+# mode; 'toast' mode shows the Windows toast instead. Overlay runs detached.
 $anim = Join-Path $PSScriptRoot 'notify-anim.ps1'
-$animDisabled = (Test-Path (Join-Path $env:LOCALAPPDATA 'claude-done-notify\anim-off')) -or ($env:CLAUDE_NOTIFY_ANIM -eq '0')
-$animEnabled = -not $animDisabled
+$animEnabled = ($Mode -eq 'overlay')
 if ($animEnabled -and (Test-Path $anim)) {
     Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
         '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass',
@@ -69,8 +76,13 @@ $hwnd = [int64]0
 
 # Pass 1: GUI terminal hosts (Windows Terminal, VS Code, ...) appear in the
 # chain as a process owning a visible top-level window.
+# Skip shell/desktop procs: when Claude is launched from Explorer (shortcut,
+# Win+R, double-click) explorer.exe is an ancestor and its visible shell window
+# would be wrongly grabbed here, shadowing the real console found in Pass 2.
+$nonTerminal = @('explorer', 'dwm', 'sihost', 'ShellExperienceHost', 'StartMenuExperienceHost', 'SearchHost', 'ApplicationFrameHost')
 foreach ($id in $ancestors) {
     $proc = Get-Process -Id $id -ErrorAction SilentlyContinue
+    if ($proc -and $proc.ProcessName -in $nonTerminal) { continue }
     if ($proc -and $proc.MainWindowHandle -ne [IntPtr]::Zero -and [ConWin]::IsWindowVisible($proc.MainWindowHandle)) {
         $hwnd = [int64]$proc.MainWindowHandle; break
     }
