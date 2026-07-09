@@ -8,6 +8,13 @@ description: Remove all per-user artifacts claude-notify creates (the HKCU claud
 The plugin writes per-user state that is NOT removed when the plugin is
 uninstalled through `/plugin`. This clears it:
 
+> **Important — do this while the plugin is still active and it only clears
+> temporarily.** The `Stop`/`Notification` hooks recreate `focus-launch.vbs`
+> and `focus-target.txt` (and re-register the protocol key) on the very next
+> notification — i.e. the next time Claude finishes a turn. To make removal
+> permanent, uninstall the plugin FIRST (which stops the hooks), THEN clean up.
+> See the order in step 3.
+
 - **Windows:** the `HKCU\Software\Classes\claude-notify` protocol key (registered
   by `hooks/notify-done.ps1` for the toast/overlay click) and the state dir
   `%LOCALAPPDATA%\claude-done-notify\` (holds `focus-target.txt`,
@@ -34,9 +41,26 @@ uninstalled through `/plugin`. This clears it:
    ```
 
 2. Report what was removed (the script prints it; on unix confirm the echo).
+   If the plugin is still installed, warn the user the focus files will be
+   recreated on the next notification — that is expected, not a failure.
 
-3. Remind the user this only clears leftover artifacts — the plugin is still
-   installed. To remove the plugin itself:
-   `/plugin uninstall claude-notify@claude-notify-marketplace`, or use the
-   `/plugin` menu. Best order: run `/notify-uninstall` first (while the script
-   is still available), then uninstall the plugin.
+3. Explain the correct order for **permanent** removal, since a live hook
+   rebuilds the artifacts:
+
+   1. Uninstall the plugin first, to stop the hooks:
+      `/plugin uninstall claude-notify@claude-notify-marketplace` (or the
+      `/plugin` menu).
+   2. Then remove the leftovers. The bundled script is gone with the plugin, so
+      use the raw removal:
+      - **Windows:**
+        ```
+        powershell -NoProfile -Command "Remove-Item -Recurse -Force 'HKCU:\Software\Classes\claude-notify','$env:LOCALAPPDATA\claude-done-notify' -EA SilentlyContinue"
+        ```
+      - **macOS/Linux:**
+        ```
+        rm -rf "$HOME/.config/claude-done-notify"
+        ```
+
+   Alternatively, to keep the plugin installed but stop it recreating anything,
+   set `/notify-visibility silent` — silent mode exits before `notify-done.ps1`
+   runs, so nothing gets re-registered.
