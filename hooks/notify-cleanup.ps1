@@ -11,7 +11,7 @@ if (Test-Path $protoKey) {
     if (-not (Test-Path $protoKey)) { $removed += 'registry: HKCU\Software\Classes\claude-notify' }
 }
 
-# 2. State dir: focus-target.txt, focus-launch.vbs, mute, anim-off, logo.png
+# 2. State dir: focus-target.txt, focus-launch.vbs, mute, duration, logo.png
 $stateDir = Join-Path $env:LOCALAPPDATA 'claude-done-notify'
 if (Test-Path $stateDir) {
     Remove-Item -Path $stateDir -Recurse -Force

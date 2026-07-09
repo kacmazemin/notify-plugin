@@ -1,27 +1,15 @@
-# Claude Code hook: Windows toast + sound. Clicking the toast focuses the terminal.
+# Claude Code hook: Windows sound + animated overlay. Clicking the overlay focuses the terminal.
 param(
-    [string]$Message = 'Job done - Claude has finished working.',
-    [string]$Mode = 'overlay'
+    [string]$Message = 'Job done - Claude has finished working.'
 )
 $ErrorActionPreference = 'SilentlyContinue'
 
-# Notification mode (set by /notify-visibility): silent | sound | toast | overlay.
-# Default overlay. 'silent' is normally filtered upstream by notify.sh; guard here too.
-$Mode = ($Mode).Trim().ToLower()
-if ($Mode -notin @('silent', 'sound', 'toast', 'overlay')) { $Mode = 'overlay' }
-if ($Mode -eq 'silent') { return }
-
-# Play a notification sound (every non-silent mode).
+# Play a notification sound.
 [System.Media.SystemSounds]::Exclamation.Play()
 
-# 'sound' = audio only, no visual - nothing to register or draw.
-if ($Mode -eq 'sound') { return }
-
-# Animated overlay (bottom-right, ~4s, click to focus terminal) for 'overlay'
-# mode; 'toast' mode shows the Windows toast instead. Overlay runs detached.
+# Animated overlay (bottom-right, click to focus terminal). Runs detached.
 $anim = Join-Path $PSScriptRoot 'notify-anim.ps1'
-$animEnabled = ($Mode -eq 'overlay')
-if ($animEnabled -and (Test-Path $anim)) {
+if (Test-Path $anim) {
     Start-Process powershell.exe -WindowStyle Hidden -ArgumentList @(
         '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass',
         '-File', "`"$anim`"", '-Message', "`"$Message`""
@@ -121,27 +109,5 @@ if ($hwnd -eq 0) {
 }
 Set-Content -Path (Join-Path $stateDir 'focus-target.txt') -Value $hwnd
 
-# Show a Windows toast notification (click -> claude-notify:focus -> focus-terminal.ps1).
-# Skipped when the animated overlay is enabled - the overlay is the notification
-# then, and clicking it focuses the terminal via the same focus-target mechanism.
-if ($animEnabled) { return }
-try {
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-    [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-
-    $appId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
-
-    $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-    $texts = $template.GetElementsByTagName('text')
-    $texts.Item(0).AppendChild($template.CreateTextNode('Claude Code')) | Out-Null
-    $texts.Item(1).AppendChild($template.CreateTextNode($Message)) | Out-Null
-
-    $root = $template.DocumentElement
-    $root.SetAttribute('activationType', 'protocol')
-    $root.SetAttribute('launch', 'claude-notify:focus')
-
-    $toast = [Windows.UI.Notifications.ToastNotification]::new($template)
-    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Show($toast)
-} catch {
-    # Toast failed (e.g. notifications disabled) - the sound above still fired
-}
+# The animated overlay (launched above) is the notification; clicking it fires
+# claude-notify:focus -> focus-terminal.ps1, which reads focus-target.txt.

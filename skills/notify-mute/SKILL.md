@@ -5,9 +5,8 @@ description: Mute or unmute all claude-notify notifications (sound, toast, and o
 
 # Mute / unmute claude-notify
 
-Legacy toggle (prefer `/notify-visibility silent`). A `mute` flag in the state
-dir makes `notify.sh` skip everything. Note: a `mode` file set by
-`/notify-visibility` overrides this flag. Reply one line.
+Toggle all notifications on/off. A `mute` flag in the state dir makes
+`notify.sh` skip everything (sound + overlay). Reply one line.
 
 ```
 d="${LOCALAPPDATA:-$HOME/.config}/claude-done-notify"; mkdir -p "$d"

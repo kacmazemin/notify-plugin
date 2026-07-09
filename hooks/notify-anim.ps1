@@ -13,7 +13,7 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
 # How long the card stays fully visible before fading out (seconds). Override by
 # writing a number to %LOCALAPPDATA%\claude-done-notify\duration (set via
-# /notify-visibility duration <sec>). Default 5, clamped to 0.5..60.
+# /notify-duration <sec>). Default 5, clamped to 0.5..60.
 $visibleSec = 5
 $durFile = Join-Path $env:LOCALAPPDATA 'claude-done-notify\duration'
 if (Test-Path $durFile) {

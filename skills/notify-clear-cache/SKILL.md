@@ -1,17 +1,18 @@
 ---
-name: notify-uninstall
-description: Remove all per-user artifacts claude-notify creates (the HKCU claude-notify: protocol handler, the focus-launch.vbs shim, focus-target.txt, and the mode/mute/anim-off/logo state files). Use when the user invokes /notify-uninstall or asks to fully clean up, purge, or remove claude-notify's leftover files and registry entries. Does not uninstall the plugin itself.
+name: notify-clear-cache
+description: Clear the per-user state claude-notify writes on your machine — the HKCU claude-notify: protocol handler, the focus-launch.vbs shim, focus-target.txt, and the mute/duration/logo state files. Use when the user invokes /notify-clear-cache or asks to clear, reset, purge, or clean up claude-notify's leftover files and registry entries. Does NOT uninstall the plugin or stop notifications.
 ---
 
-# Clean up claude-notify artifacts
+# Clear claude-notify cache / state
 
 Removes the `HKCU\Software\Classes\claude-notify` protocol key and the state dir
-(`%LOCALAPPDATA%\claude-done-notify\` / `~/.config/claude-done-notify/`). A plugin
-uninstall does NOT remove these.
+(`%LOCALAPPDATA%\claude-done-notify\` / `~/.config/claude-done-notify/`) — which
+holds the mute flag, duration, custom logo, focus shim, and focus target. A
+plugin uninstall does NOT remove these.
 
-**While the plugin is installed this only clears temporarily** — the
-Stop/Notification hook recreates the focus files + key on the next turn. For
-permanent removal, uninstall the plugin FIRST, then clean up (step 3).
+**This does not stop notifications.** While the plugin is installed, the
+Stop/Notification hook recreates the focus files + key on the next turn. To
+actually stop notifications, uninstall the plugin (see below) or `/notify-mute`.
 
 ## Run
 
@@ -35,5 +36,4 @@ will reappear on the next notification — expected, not a failure.
    - Windows: `powershell -NoProfile -Command "Remove-Item -Recurse -Force 'HKCU:\Software\Classes\claude-notify','$env:LOCALAPPDATA\claude-done-notify' -EA SilentlyContinue"`
    - macOS/Linux: `rm -rf "$HOME/.config/claude-done-notify"`
 
-Alternative (keep plugin, stop recreation): `/notify-visibility silent` — silent
-mode exits before `notify-done.ps1` runs, so nothing gets re-registered.
+Just want it quiet but keep the plugin? `/notify-mute`.
