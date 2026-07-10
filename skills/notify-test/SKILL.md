@@ -9,12 +9,12 @@ Run the notification once. Keep the response to one line — this is a cheap
 action, don't over-explain.
 
 ```
-CLAUDE_NOTIFY_FORCE=1 bash "${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh" "Test notification - it works!"
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/notify.sh" "Test notification - it works!"
 ```
 
-`CLAUDE_NOTIFY_FORCE=1` bypasses the desktop-app skip guard so a manual test
-still fires inside the Claude desktop app (where the automatic hooks stay
-silent because the app has its own native notifications).
+Note: in the Claude desktop app this is silent by design — the plugin never
+fires there (the app has its own native notifications). Run the test from the
+CLI/terminal to see the sound + overlay.
 
 - If an argument N is given, sleep N seconds first so the user can minimize:
   `powershell.exe -NoProfile -Command "Start-Sleep N"` then run the line above.
