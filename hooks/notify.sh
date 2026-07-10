@@ -14,6 +14,15 @@ STATE_DIR="${LOCALAPPDATA:-$HOME/.config}/claude-done-notify"
 # notification elsewhere.
 [ -f "$STATE_DIR/mute" ] && exit 0
 
+# The Claude desktop app ships its own native notifications with correct
+# click-to-focus. This plugin is built around a terminal, so in the desktop app
+# it only duplicates that card and its terminal-focus logic misfires (there is
+# no console, so it grabs the wrong Claude window). Skip there and fire only in
+# the CLI/terminal. Set CLAUDE_NOTIFY_FORCE=1 to override (used by /notify-test).
+if [ "$CLAUDE_CODE_ENTRYPOINT" = "claude-desktop" ] && [ -z "$CLAUDE_NOTIFY_FORCE" ]; then
+    exit 0
+fi
+
 if command -v powershell.exe >/dev/null 2>&1; then
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$DIR/notify-done.ps1" -Message "$MSG" >/dev/null 2>&1
 elif command -v osascript >/dev/null 2>&1; then

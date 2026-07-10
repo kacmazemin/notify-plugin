@@ -2,7 +2,7 @@
 
 > Desktop notification + sound whenever Claude Code finishes a job or is waiting for your input — so you can tab away while it works.
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](.claude-plugin/plugin.json)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](.claude-plugin/plugin.json)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#platform-support)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -27,6 +27,14 @@
 | Linux    | `notify-send` | — |
 
 The overlay and duration control are Windows-only. On macOS/Linux the plugin fires the native notification; `/notify-mute` suppresses it everywhere.
+
+## Desktop App vs CLI
+
+The plugin is built around a **terminal** — it fires a sound + overlay and, when clicked, brings the terminal Claude ran in back to the foreground.
+
+The **Claude desktop app** already ships its own native notifications with correct click-to-focus, and there is no terminal for the overlay to return to. Running there, the plugin would only duplicate the native card and its terminal-focus logic would misfire (it grabs the wrong Claude window). So the plugin **auto-skips in the desktop app** and fires only in the CLI / terminal, where there is no built-in notification.
+
+Detection is via the `CLAUDE_CODE_ENTRYPOINT` environment variable (set to `claude-desktop` in the desktop app). To fire anyway — e.g. to test the overlay inside the desktop app — set `CLAUDE_NOTIFY_FORCE=1` (this is what `/notify-test` does).
 
 ## Install
 
@@ -92,7 +100,7 @@ The overlay visual is resolved in this order:
 
 ## How It Works
 
-The plugin registers `Stop` and `Notification` hooks (`hooks/hooks.json`) that run `hooks/notify.sh` asynchronously. The script checks the `mute` flag, detects your OS, and — unless muted — fires the notification. On Windows it delegates to `hooks/notify-done.ps1`, which plays the sound and launches the animated overlay (`hooks/notify-anim.ps1`).
+The plugin registers `Stop` and `Notification` hooks (`hooks/hooks.json`) that run `hooks/notify.sh` asynchronously. The script checks the `mute` flag, skips silently in the Claude desktop app (`CLAUDE_CODE_ENTRYPOINT=claude-desktop`, unless `CLAUDE_NOTIFY_FORCE=1` — see [Desktop App vs CLI](#desktop-app-vs-cli)), detects your OS, and — unless muted or skipped — fires the notification. On Windows it delegates to `hooks/notify-done.ps1`, which plays the sound and launches the animated overlay (`hooks/notify-anim.ps1`).
 
 **Windows click-to-focus:** the overlay uses protocol activation. On first run the script registers a user-level `claude-notify:` URI protocol under `HKCU\Software\Classes` (no admin rights) pointing at `hooks/focus-terminal.ps1`, and remembers which terminal window Claude was running in. Clicking the notification restores and focuses that window. The window is located by walking Claude's process ancestry — skipping shell/desktop processes like `explorer.exe` so the real console is found even when Claude was launched from Explorer.
 
